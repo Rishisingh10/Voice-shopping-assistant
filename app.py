@@ -2,6 +2,7 @@ import streamlit as st
 import speech_recognition as sr
 import re
 import io
+from deep_translator import GoogleTranslator
 
 st.set_page_config(page_title="Voice Shopping Assistant", page_icon="🛒", layout="centered")
 
@@ -31,8 +32,9 @@ def process_command(text):
     feedback = "Command not entirely understood."
 
     if re.search(r'\b(add|buy|need)\b', text):
-        match = re.search(r'(?:add|buy|need)\s+(?:some\s+|a\s+)?(\d+)?\s*(?:bottles of\s+|boxes of\s+)?([a-z\s]+)',
-                          text)
+        match = re.search(
+            r'(?:add|buy|need)\s+(?:some\s+|a\s+)?(\d+)?\s*(?:bottles of\s+|boxes of\s+|packets of\s+|packet of\s+)?([a-z\s]+)',
+            text)
         if match:
             qty = match.group(1) if match.group(1) else "1"
             item_name = match.group(2).strip()
@@ -101,9 +103,16 @@ if audio_value:
             audio_data = recognizer.record(source)
             transcript = recognizer.recognize_google(audio_data, language=selected_lang_code)
             st.info(f'Heard: "{transcript}"')
+
             with st.spinner("Processing command..."):
-                response_msg = process_command(transcript)
+                if selected_lang_code != "en-US":
+                    english_transcript = GoogleTranslator(source='auto', target='en').translate(transcript)
+                else:
+                    english_transcript = transcript
+
+                response_msg = process_command(english_transcript)
                 st.success(response_msg)
+
     except sr.UnknownValueError:
         st.error("Could not understand audio. Please try again.")
     except sr.RequestError:
