@@ -14,7 +14,8 @@ item_database = {
     "apples": {"category": "Produce", "substitute": "pears", "price": 2},
     "bread": {"category": "Bakery", "substitute": "tortillas", "price": 3},
     "toothpaste": {"category": "Personal Care", "substitute": "baking soda", "price": 6},
-    "water": {"category": "Beverages", "substitute": "sparkling water", "price": 1}
+    "water": {"category": "Beverages", "substitute": "sparkling water", "price": 1},
+    "egg": {"category": "Dairy & Eggs", "substitute": "tofu", "price": 2}
 }
 seasonal_items = ["mangoes", "watermelon"]
 purchase_history = ["bread", "milk"]
@@ -38,7 +39,13 @@ def process_command(text):
         if match:
             qty = match.group(1) if match.group(1) else "1"
             item_name = match.group(2).strip()
-            cat = item_database.get(item_name, {}).get("category", "General")
+
+            cat = "General"
+            for db_item, details in item_database.items():
+                if db_item in item_name:
+                    cat = details["category"]
+                    break
+
             st.session_state.shopping_list.append({"name": item_name, "quantity": qty, "category": cat})
             feedback = f"Added {qty} {item_name} to {cat}."
 
@@ -64,7 +71,11 @@ def process_command(text):
         match = re.search(r'(?:substitute|alternative)\s+(?:for\s+)?([a-z\s]+)', text)
         if match:
             item_name = match.group(1).strip()
-            sub = item_database.get(item_name, {}).get("substitute", "unknown")
+            sub = "unknown"
+            for db_item, details in item_database.items():
+                if db_item in item_name:
+                    sub = details["substitute"]
+                    break
             feedback = f"Alternative for {item_name} is {sub}."
 
     elif "under" in text or "less than" in text:
